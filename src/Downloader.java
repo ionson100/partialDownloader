@@ -10,12 +10,10 @@ import java.nio.file.attribute.FileTime;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Downloader extends Task {
+public final class Downloader extends Task {
 
     private final static String HLAM = ".nocomplete";
     private static final Logger log = Logger.getLogger ( Downloader.class );
@@ -71,19 +69,21 @@ public class Downloader extends Task {
 
 
             con.connect ();
-            Map <String, List <String>> map = con.getHeaderFields ();
             int code = con.getResponseCode ();// 206 add download
             if ( code == 304 ||code==404) return;
             if ( code == 200 ) {// файл измененет или  не начал качаться на клиенте
                 {
                     File f = new File ( path );
-                    if ( f.exists () ) ;
-                    f.delete ();
+                    if ( f.exists () ) {
+                        f.delete ();
+                    }
                 }
                 {
                     File f = new File ( path + HLAM );
-                    if ( f.exists () ) ;
-                    f.delete ();
+                    if ( f.exists () ) {
+                        f.delete ();
+                    }
+
                 }
 
                 long httplast = con.getLastModified ();
@@ -116,7 +116,7 @@ public class Downloader extends Task {
                 input.close ();
             }
             File f = new File ( path + HLAM );
-            if ( f.exists () == false ) return;
+            if ( !f.exists () ) return;
             f.renameTo ( new File ( path ) );
         }
     }
@@ -157,10 +157,12 @@ public class Downloader extends Task {
             }
         }
         // навешиваем атрибут создания файла по  времение с сервера
-        targetFile.createNewFile ();
-        FileTime fileTime = FileTime.fromMillis ( httplast );
-        Files.setAttribute ( targetFile.toPath () , "basic:creationTime" , fileTime );
-        Files.setAttribute ( targetFile.toPath () , "user:tags" , etag.getBytes () );
+        if(targetFile.createNewFile ()){
+            FileTime fileTime = FileTime.fromMillis ( httplast );
+            Files.setAttribute ( targetFile.toPath () , "basic:creationTime" , fileTime );
+            Files.setAttribute ( targetFile.toPath () , "user:tags" , etag.getBytes () );
+        }
+
 
 
     }
@@ -183,11 +185,7 @@ public class Downloader extends Task {
         SSLContext sc = SSLContext.getInstance ( "SSL" );
         sc.init ( null , trustAllCerts , new java.security.SecureRandom () );
         HttpsURLConnection.setDefaultSSLSocketFactory ( sc.getSocketFactory () );
-        HostnameVerifier allHostsValid = new HostnameVerifier () {
-            public boolean verify ( String hostname , SSLSession session ) {
-                return true;
-            }
-        };
+        HostnameVerifier allHostsValid = ( hostname , session ) -> true;
         HttpsURLConnection.setDefaultHostnameVerifier ( allHostsValid );
 
     }
