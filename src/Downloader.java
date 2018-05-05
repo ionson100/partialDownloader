@@ -12,6 +12,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Downloader extends Task {
 
@@ -71,7 +73,7 @@ public class Downloader extends Task {
             con.connect ();
             Map <String, List <String>> map = con.getHeaderFields ();
             int code = con.getResponseCode ();// 206 add download
-            if ( code == 304 ) return;
+            if ( code == 304 ||code==404) return;
             if ( code == 200 ) {// файл измененет или  не начал качаться на клиенте
                 {
                     File f = new File ( path );
@@ -193,7 +195,9 @@ public class Downloader extends Task {
     public static void main ( String[] args ) {
         String path = "E:\\";
         String url = "https://";
-        new Downloader ().setPath ( path ).setUrl ( url ).execute ();
+      //  new Downloader ().setPath ( path ).setUrl ( url ).execute ();
+        ExecutorService service = Executors.newFixedThreadPool(1);
+        service.submit ( new Downloader ().setPath ( path ).setUrl ( url ) );
 
     }
 
